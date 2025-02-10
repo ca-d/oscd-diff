@@ -80,6 +80,10 @@ export class DiffTree extends LitElement {
     ReturnType<typeof newHasher>
   >();
 
+  @property() ourHasher?: ReturnType<typeof newHasher>;
+
+  @property() theirHasher?: ReturnType<typeof newHasher>;
+
   @property({ type: Number }) depth = 0;
 
   @property({ type: Boolean, reflect: true })
@@ -91,16 +95,6 @@ export class DiffTree extends LitElement {
 
   @property({ type: Boolean, reflect: true })
   expanded = false;
-
-  get ourHasher(): ReturnType<typeof newHasher> | undefined {
-    return this.ours ? this.hashers.get(this.ours.ownerDocument) : undefined;
-  }
-
-  get theirHasher(): ReturnType<typeof newHasher> | undefined {
-    return this.theirs
-      ? this.hashers.get(this.theirs.ownerDocument)
-      : undefined;
-  }
 
   get ourHash(): string | undefined {
     return this.ourHasher?.hash(this.ours!);
@@ -160,6 +154,10 @@ export class DiffTree extends LitElement {
             html`<diff-tree
               .ours=${o}
               .theirs=${t}
+              .ourHasher=${o?.ownerDocument &&
+              this.hashers.get(o.ownerDocument)}
+              .theirHasher=${t?.ownerDocument &&
+              this.hashers.get(t.ownerDocument)}
               .hashers=${this.hashers}
               .expanded=${expanded}
               .depth=${this.depth + 1}
