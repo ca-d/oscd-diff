@@ -75,11 +75,6 @@ export class DiffTree extends LitElement {
 
   @property() theirs?: Element;
 
-  @property() hashers = new WeakMap<
-    XMLDocument,
-    ReturnType<typeof newHasher>
-  >();
-
   @property() ourHasher?: ReturnType<typeof newHasher>;
 
   @property() theirHasher?: ReturnType<typeof newHasher>;
@@ -154,11 +149,8 @@ export class DiffTree extends LitElement {
             html`<diff-tree
               .ours=${o}
               .theirs=${t}
-              .ourHasher=${o?.ownerDocument &&
-              this.hashers.get(o.ownerDocument)}
-              .theirHasher=${t?.ownerDocument &&
-              this.hashers.get(t.ownerDocument)}
-              .hashers=${this.hashers}
+              .ourHasher=${this.ourHasher}
+              .theirHasher=${this.theirHasher}
               .expanded=${expanded}
               .depth=${this.depth + 1}
             ></diff-tree>`,

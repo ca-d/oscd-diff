@@ -283,7 +283,6 @@ export default class OscdDiff extends LitElement {
           this.hashers.get(ours.ownerDocument)}
           .theirHasher=${theirs?.ownerDocument &&
           this.hashers.get(theirs.ownerDocument)}
-          .hashers=${this.hashers}
         ></diff-tree>`;
       })}`;
   }
