@@ -163,6 +163,7 @@ interface Reference {
 
 const references: Record<string, Reference[]> = {
   LN0: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -180,6 +181,7 @@ const references: Record<string, Reference[]> = {
     },
   ],
   LN: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -225,6 +227,7 @@ const references: Record<string, Reference[]> = {
     },
   ],
   LogControl: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -248,6 +251,7 @@ const references: Record<string, Reference[]> = {
       scope: 'LN0',
     },
   ],
+  // FIXME(stee-re): follow the ConnectedAP reference path all the way to the referenced AccessPoint
   /* ConnectedAP: [
     {
       fields: [
@@ -262,6 +266,7 @@ const references: Record<string, Reference[]> = {
     },
   ], */
   DO: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -275,6 +280,7 @@ const references: Record<string, Reference[]> = {
     },
   ],
   SDO: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -288,6 +294,7 @@ const references: Record<string, Reference[]> = {
     },
   ],
   BDA: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -300,6 +307,9 @@ const references: Record<string, Reference[]> = {
       scope: 'DataTypeTemplates',
     },
   ],
+  // FIXME(stee-re): correctly resolve to ConnectivityNode
+  // TODO(stee-re): do the same for NeutralPoint
+  //                (same element, same meaning, different tag name)
   /* Terminal: [
     {
       fields: [
@@ -314,6 +324,7 @@ const references: Record<string, Reference[]> = {
     },
   ], */
   SampledValueControl: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -327,6 +338,7 @@ const references: Record<string, Reference[]> = {
     },
   ],
   GSEControl: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -340,6 +352,7 @@ const references: Record<string, Reference[]> = {
     },
   ],
   DA: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -353,6 +366,7 @@ const references: Record<string, Reference[]> = {
     },
   ],
   ReportControl: [
+    // TODO(stee-re): make faster
     {
       fields: [
         {
@@ -878,6 +892,8 @@ export function hasher(
       return description;
     }
 
+    // TODO(stee-re): replace by call to findReferences(e).filter(shouldHashElement).foreach(element =>
+    //               group by tag name, then put it into the appropriate array
     references[e.tagName].forEach(({ fields, to, scope }) => {
       const candidates = Array.from(
         e.closest(scope)?.querySelectorAll(to) ?? [],
@@ -923,7 +939,7 @@ export function hasher(
     return description;
   }
 
-  function describeBDA(e: Element) {
+  function describeDA(e: Element) {
     const description: Record<string, unknown> = {
       ...describeElement(e),
     };
@@ -955,8 +971,8 @@ export function hasher(
   }
 
   const descriptions: Record<string, (e: Element) => object> = {
-    BDA: describeBDA,
-    DA: describeBDA,
+    BDA: describeDA,
+    DA: describeDA,
     DataSet: describeDataSet,
   };
 
