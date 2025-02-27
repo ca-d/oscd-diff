@@ -10,6 +10,37 @@ export type Description = Record<string, string | string[]> & {
   eNS?: Record<string, Record<string, string>>;
 };
 
+const referenceLookups: Record<string, (e: Element) => Element[]> = {};
+
+export function findReferences(element: Element): Element[] {
+  const referencedElements = [] as Element[];
+
+  if (element.tagName in referenceLookups) {
+    return referenceLookups[element.tagName](element);
+  }
+
+  if (!(element.tagName in references)) {
+    return [];
+  }
+
+  references[element.tagName].forEach(({ fields, to, scope }) => {
+    const candidates = Array.from(
+      element.closest(scope)?.querySelectorAll(to) ?? [],
+    );
+    referencedElements.push(
+      ...candidates.filter(toE => {
+        const toAttrs = fields.map(f => f.to);
+        const fromAttrs = fields.map(f => f.from);
+        const toVals = toAttrs.map(a => toE.getAttribute(a));
+        const fromVals = fromAttrs.map(a => element.getAttribute(a));
+        return fromVals.every((val, i) => toVals[i] === val) && toE;
+      }),
+    );
+  });
+
+  return referencedElements;
+}
+
 export function createHashElementPredicate({
   selectors,
   namespaces,
