@@ -10,7 +10,24 @@ export type Description = Record<string, string | string[]> & {
   eNS?: Record<string, Record<string, string>>;
 };
 
-const referenceLookups: Record<string, (e: Element) => Element[]> = {};
+function findAccessPointReferences(e: Element): Element[] {
+  let serverAt = e.querySelector(':scope>ServerAt, :scope>Server');
+  let apName = serverAt?.getAttribute('apName');
+  while (serverAt && serverAt.tagName !== 'Server') {
+    serverAt =
+      serverAt
+        .closest('IED')
+        ?.querySelector(
+          `:scope>AccessPoint[name="${apName}"]>Server, :scope>AccessPoint[name="${apName}"]>ServerAt`,
+        ) ?? null;
+    apName = serverAt?.getAttribute('apName');
+  }
+  return serverAt ? [serverAt] : [];
+}
+
+const referenceLookups: Record<string, (e: Element) => Element[]> = {
+  AccessPoint: findAccessPointReferences,
+};
 
 export function findReferences(element: Element): Element[] {
   const referencedElements = [] as Element[];
@@ -152,6 +169,7 @@ const identifiers: Record<string, string[]> = {
   ClientLN: ['apRef', 'iedName', 'ldInst', 'prefix', 'lnClass', 'lnInst'],
   KDC: ['iedName', 'apName'],
   LN: ['prefix', 'lnClass', 'inst'],
+  AccessPoint: ['name'],
 };
 
 interface Reference {
@@ -892,8 +910,17 @@ export function hasher(
       return description;
     }
 
-    // TODO(stee-re): replace by call to findReferences(e).filter(shouldHashElement).foreach(element =>
-    //               group by tag name, then put it into the appropriate array
+    findReferences(e)
+      .filter(shouldHashElement)
+      .forEach(element => {
+        const tag = element.tagName;
+        if (!(tag in description)) {
+          description[tag] = [];
+        }
+        description[tag].push(hash(element));
+        description[tag].sort();
+      });
+
     references[e.tagName].forEach(({ fields, to, scope }) => {
       const candidates = Array.from(
         e.closest(scope)?.querySelectorAll(to) ?? [],
@@ -970,7 +997,19 @@ export function hasher(
     return description;
   }
 
+  function describeAccessPoint(e: Element) {
+    const description = {
+      ...describeAttributes(e),
+    } as Description;
+    const apReferences = findAccessPointReferences(e);
+    if (apReferences.length) {
+      description['@Server'] = apReferences.map(hash);
+    }
+    return description;
+  }
+
   const descriptions: Record<string, (e: Element) => object> = {
+    AccessPoint: describeAccessPoint,
     BDA: describeDA,
     DA: describeDA,
     DataSet: describeDataSet,
