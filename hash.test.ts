@@ -186,11 +186,11 @@ describe('hash', () => {
       namespaces: { inclusive: false, vals: [], except: [] },
     }));
     const server = scl('Server', {}, [scl('LDevice', { inst: 'ldInst1' })]);
-    const serverAt = scl('ServerAt', { apName: 'AP1' });
-    const recursiveServerAt = scl('ServerAt', { apName: 'AP2' });
+    const serverAtAP1 = scl('ServerAt', { apName: 'AP1' });
+    const serverAtAP2 = scl('ServerAt', { apName: 'AP2' });
     const ap1 = scl('AccessPoint', { name: 'AP1' }, [server]);
-    const ap2 = scl('AccessPoint', { name: 'AP2' }, [serverAt]);
-    const ap3 = scl('AccessPoint', { name: 'AP3' }, [recursiveServerAt]);
+    const ap2 = scl('AccessPoint', { name: 'AP2' }, [serverAtAP1]);
+    const ap3 = scl('AccessPoint', { name: 'AP3' }, [serverAtAP2]);
     const ied = scl('IED', { name: 'IED1' }, [ap1, ap2, ap3]);
     const ap1Inst = ied.querySelector('AccessPoint[name="AP1"]');
     const ap2Inst = ied.querySelector('AccessPoint[name="AP2"]');
@@ -203,5 +203,29 @@ describe('hash', () => {
     const ap3InstHash = hash(ap3Inst);
     expect(ap1InstHash).to.equal(ap2InstHash);
     expect(ap1InstHash).to.equal(ap3InstHash);
+  });
+
+  it('dereferences ConnectedAPs', () => {
+    const connectedAP = scl('ConnectedAP', { iedName: 'IED1', apName: 'AP1' });
+    const subNetwork = scl('SubNetwork', { name: 'SN1' }, [connectedAP]);
+    const communication = scl('Communication', {}, [subNetwork]);
+    const ied1 = scl('IED', { name: 'IED1' }, [
+      scl('AccessPoint', { name: 'AP1' }),
+    ]);
+    const ied2 = scl('IED', { name: 'IED1' }, [
+      scl('AccessPoint', { name: 'AP1' }, [
+        scl('Server', {}, [scl('LDevice', { inst: 'ldInst1' })]),
+      ]),
+    ]);
+    const sclDoc1 = scl('SCL', {}, [communication, ied1]);
+    const sclDoc2 = scl('SCL', {}, [communication, ied2]);
+    ['ConnectedAP', 'SubNetwork', 'Communication'].forEach(tagName => {
+      const a = sclDoc1.querySelector(tagName);
+      const b = sclDoc2.querySelector(tagName);
+      if (!a || !b) {
+        throw new Error(`${tagName} not found`);
+      }
+      expect(hash(a)).to.not.equal(hash(b));
+    });
   });
 });
