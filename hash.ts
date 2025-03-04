@@ -10,6 +10,19 @@ export type Description = Record<string, string | string[]> & {
   eNS?: Record<string, Record<string, string>>;
 };
 
+function findConnectedAPReferences(e: Element): Element[] {
+  const iedName = e.getAttribute('iedName');
+  const ied = e.closest('SCL')?.querySelector(`:scope>IED[name="${iedName}"]`);
+  if (!ied) {
+    return [];
+  }
+  return Array.from(
+    ied.querySelectorAll(
+      `:scope>AccessPoint[name="${e.getAttribute('apName') ?? ''}"]`,
+    ),
+  );
+}
+
 function findAccessPointReferences(e: Element): Element[] {
   let serverAt = e.querySelector(':scope>ServerAt, :scope>Server');
   let apName = serverAt?.getAttribute('apName');
@@ -27,6 +40,7 @@ function findAccessPointReferences(e: Element): Element[] {
 
 const referenceLookups: Record<string, (e: Element) => Element[]> = {
   AccessPoint: findAccessPointReferences,
+  ConnectedAP: findConnectedAPReferences,
 };
 
 export function findReferences(element: Element): Element[] {
@@ -269,20 +283,6 @@ const references: Record<string, Reference[]> = {
       scope: 'LN0',
     },
   ],
-  // FIXME(stee-re): follow the ConnectedAP reference path all the way to the referenced AccessPoint
-  /* ConnectedAP: [
-    {
-      fields: [
-        {
-          to: "name",
-          from: "iedName",
-        },
-      ],
-      to: ":scope>IED",
-      from: ":scope>Communication>SubNetwork>ConnectedAP",
-      scope: "SCL",
-    },
-  ], */
   DO: [
     // TODO(stee-re): make faster
     {
@@ -906,9 +906,6 @@ export function hasher(
 
   function describeReferences(e: Element) {
     const description: Record<string, string[]> = {};
-    if (!(e.tagName in references)) {
-      return description;
-    }
 
     findReferences(e)
       .filter(shouldHashElement)
@@ -920,6 +917,10 @@ export function hasher(
         description[tag].push(hash(element));
         description[tag].sort();
       });
+
+    if (!(e.tagName in references)) {
+      return description;
+    }
 
     references[e.tagName].forEach(({ fields, to, scope }) => {
       const candidates = Array.from(
