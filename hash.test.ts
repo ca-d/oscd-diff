@@ -294,4 +294,8 @@ describe('hash', () => {
       expect(hash(a)).to.not.equal(hash(b));
     });
   });
+
+  it('TODO: dereferences FCDAs', () => {
+    // TODO(ca-d): add tests
+  });
 });
